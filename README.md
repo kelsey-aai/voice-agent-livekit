@@ -9,7 +9,7 @@ This is **not** the LiveKit Agents framework. We're not plugging in separate STT
 WebRTC and AI are different problems with different best-in-class solutions:
 
 - **LiveKit** is the easiest way to ship production-grade real-time audio. SDKs for Web, iOS, Android, React Native, Flutter, and Unity. Built-in recording, simulcast, adaptive bitrate, and end-to-end encryption. A managed cloud and a self-hostable open-source server.
-- **AssemblyAI's Voice Agent API** is the easiest way to ship a voice agent. One WebSocket gives you Universal-3 Pro Streaming for speech-to-text, an LLM that decides what to say, a TTS engine with 30+ voices, plus neural turn detection, barge-in, and tool calling — all server-side, all in one connection.
+- **AssemblyAI's Voice Agent API** is the easiest way to ship a voice agent. One WebSocket gives you Universal-3.6 Pro Realtime for speech-to-text, an LLM that decides what to say, a TTS engine with 30+ voices, plus neural turn detection, barge-in, and tool calling — all server-side, all in one connection.
 
 Use them together and you get multi-user voice rooms with a real AI agent inside, without writing a STT/LLM/TTS orchestration layer or building your own WebRTC stack.
 
@@ -20,12 +20,13 @@ Use them together and you get multi-user voice rooms with a real AI agent inside
 | Where the AI lives | You configure STT, LLM, and TTS plugins separately | One AssemblyAI WebSocket — STT, LLM, and TTS all server-side |
 | Services to wire up | 3+ (one per plugin) | 1 |
 | API keys to manage | 3+ | 2 (AssemblyAI + LiveKit) |
+| Speech-to-text | Plugin of your choice (Universal-3.6 Pro Realtime available) | Universal-3.6 Pro Realtime, built in |
 | Turn detection | Plugin-dependent; configure VAD + endpointing | Built into the Voice Agent API |
 | Barge-in | Framework handles it across plugins | Built in; one event (`reply.done` with `status: "interrupted"`) |
 | Tool calling | LLM-plugin-specific | Built in; one event flow (`tool.call` → `tool.result`) |
 | What LiveKit does | Transport + agent runtime | Transport only |
 
-If you want LiveKit Agents with AssemblyAI Universal-3 Pro Streaming as the STT, see the [LiveKit Agents + Universal-3 Pro Streaming tutorial](../../01-livekit-universal-3-pro). If you want one WebSocket to do all of the AI, you're in the right place.
+If you want the LiveKit Agents framework with AssemblyAI Universal-3.6 Pro Realtime as the STT plugin, see the full-deploy guide: [Build and deploy real-time AI voice agents using LiveKit and AssemblyAI](https://www.assemblyai.com/blog/build-and-deploy-real-time-ai-voice-agents-using-livekit-and-assemblyai). Universal-3.6 Pro Realtime requires `livekit-agents` 1.8.0+ (1.8.3+ via LiveKit Inference), and the plugin still defaults to `universal-3-5-pro`, so pass `model="universal-3-6-pro"` explicitly. If you want one WebSocket to do all of the AI, you're in the right place.
 
 ## Architecture
 
@@ -46,7 +47,7 @@ This Python worker — joins the room with livekit-rtc as a server-side particip
 │  wss://agents.assemblyai.com/v1/ws                             │
 │                                                                │
 │  AssemblyAI Voice Agent API                                    │
-│  ├── Universal-3 Pro Streaming  (speech → text)                │
+│  ├── Universal-3.6 Pro Realtime  (speech → text)               │
 │  ├── LLM                        (text → reply)                 │
 │  └── TTS                        (reply → 24 kHz PCM16 audio)   │
 │                                                                │
@@ -244,7 +245,7 @@ elif t == "reply.done":
 "output": {"voice": "arjun"}     # Hindi/Hinglish, code-switches with English
 ```
 
-The full catalog is in the [voices reference](https://www.assemblyai.com/docs/voice-agents/voice-agent-api/voices). Multilingual voices code-switch automatically.
+The full catalog is in the [voices reference](https://www.assemblyai.com/docs/voice-agents/voice-agent-api/voices). Multilingual voices code-switch automatically. The Voice Agent API currently supports six languages end to end: English, Spanish, French, German, Italian, and Portuguese.
 
 ### Adjust the system prompt and greeting
 
@@ -284,7 +285,7 @@ For deliberate speech (eldercare, healthcare), raise `max_silence` to `2500`. Fo
 If your conversation includes product names, medical terms, or rare proper nouns, add them to `session.input.keyterms`:
 
 ```python
-"input": { "keyterms": ["Universal-3 Pro Streaming", "AssemblyAI", "LiveKit"] }
+"input": { "keyterms": ["Universal-3.6 Pro Realtime", "AssemblyAI", "LiveKit"] }
 ```
 
 The recognizer biases toward those words, which dramatically improves accuracy on domain vocabulary.
@@ -335,7 +336,7 @@ The full Voice Agent API troubleshooting guide is in the [docs](https://www.asse
 
 ### What is AssemblyAI's Voice Agent API?
 
-AssemblyAI's Voice Agent API is a single WebSocket endpoint (`wss://agents.assemblyai.com/v1/ws`) that handles the full voice agent pipeline server-side: speech-to-text via Universal-3 Pro Streaming, an LLM that decides what to say, and a text-to-speech engine with 30+ voices. It includes neural turn detection, barge-in, and tool calling out of the box, so you can build a conversational agent without integrating separate STT, LLM, or TTS providers.
+AssemblyAI's Voice Agent API is a single WebSocket endpoint (`wss://agents.assemblyai.com/v1/ws`) that handles the full voice agent pipeline server-side: speech-to-text via Universal-3.6 Pro Realtime, an LLM that decides what to say, and a text-to-speech engine with 30+ voices. It includes neural turn detection, barge-in, and tool calling out of the box, so you can build a conversational agent without integrating separate STT, LLM, or TTS providers.
 
 ### Why use LiveKit with the Voice Agent API instead of going direct?
 
@@ -343,7 +344,7 @@ LiveKit handles real-time audio transport (WebRTC, mobile and browser SDKs, reco
 
 ### Is this the LiveKit Agents framework?
 
-No. The LiveKit Agents framework expects you to plug in separate STT, LLM, and TTS components. This tutorial uses the LiveKit `livekit-rtc` Python SDK directly to join a room as a server-side participant, then forwards audio to the AssemblyAI Voice Agent API, which replaces all three. If you want the framework approach with AssemblyAI as the STT, see the LiveKit Agents + Universal-3 Pro Streaming tutorial.
+No. The LiveKit Agents framework expects you to plug in separate STT, LLM, and TTS components. This tutorial uses the LiveKit `livekit-rtc` Python SDK directly to join a room as a server-side participant, then forwards audio to the AssemblyAI Voice Agent API, which replaces all three. If you want the framework approach with AssemblyAI as the STT, start with the [full LiveKit deploy guide](https://www.assemblyai.com/blog/build-and-deploy-real-time-ai-voice-agents-using-livekit-and-assemblyai).
 
 ### What audio format does the Voice Agent API expect?
 
