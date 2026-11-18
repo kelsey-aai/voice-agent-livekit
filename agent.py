@@ -73,7 +73,7 @@ async def entrypoint(ctx: JobContext) -> None:
 
     session = AgentSession(
         stt=assemblyai.STT(
-            model="universal-3-6-pro",
+            model="assemblyai-stt-3-7-realtime-agent",
             mode="balanced",
             vad_threshold=VAD_THRESHOLD,
             keyterms_prompt=["Acme", "LiveKit", "AssemblyAI"],

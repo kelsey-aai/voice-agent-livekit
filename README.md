@@ -4,7 +4,7 @@ Companion code for the AssemblyAI blog post **[Build a production voice agent wi
 
 A multi-user, browser-ready voice agent in about 100 lines of Python. **LiveKit** handles transport and orchestration through the LiveKit Agents framework. **AssemblyAI** runs all three models behind it:
 
-- **Speech-to-text:** [Universal-3.6 Pro Realtime](https://www.assemblyai.com/blog/universal-3-6-pro-realtime) (`universal-3-6-pro`), with end-of-turn detection built in
+- **Speech-to-text:** [AssemblyAI-STT-3.7-Realtime-Agent](https://www.assemblyai.com/blog/introducing-assemblyai-stt-3-7) (`assemblyai-stt-3-7-realtime-agent`), with end-of-turn detection built in
 - **LLM:** the [LLM Gateway](https://www.assemblyai.com/products/llm-gateway), through LiveKit's OpenAI plugin (it speaks the OpenAI Chat Completions API)
 - **Text-to-speech:** the [AssemblyAI Text-to-Speech API](https://www.assemblyai.com/products/text-to-speech) (`assemblyai-tts-1`)
 
@@ -15,8 +15,8 @@ One AssemblyAI API key covers all three. Barge-in, tool calling, and turn detect
 | Job | Handled by | Where you set it |
 |---|---|---|
 | Rooms, WebRTC, clients | LiveKit Cloud or self-hosted `livekit-server` | `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` |
-| Speech-to-text | Universal-3.6 Pro Realtime | `assemblyai.STT(model="universal-3-6-pro")` |
-| Turn detection | Universal-3.6 Pro Realtime (punctuation-based end of turn) | `TurnHandlingOptions(turn_detection="stt")` |
+| Speech-to-text | AssemblyAI-STT-3.7-Realtime-Agent | `assemblyai.STT(model="assemblyai-stt-3-7-realtime-agent")` |
+| Turn detection | AssemblyAI-STT-3.7-Realtime-Agent (punctuation-based end of turn) | `TurnHandlingOptions(turn_detection="stt")` |
 | Language model | LLM Gateway (OpenAI-compatible) | `openai.LLM(base_url="https://llm-gateway.assemblyai.com/v1")` |
 | Text-to-speech | `assemblyai-tts-1` | `assemblyai.TTS(voice=...)` |
 | Barge-in | LiveKit stops playback; the TTS plugin cancels the request in flight | On by default; Silero VAD in `AgentSession` |
@@ -37,7 +37,7 @@ LiveKit Cloud (or self-hosted livekit-server)
 agent.py — LiveKit Agents AgentSession, joined to the room
         │
         ├── assemblyai.STT  → wss://streaming.assemblyai.com
-        │                     Universal-3.6 Pro Realtime: transcripts + end of turn
+        │                     AssemblyAI-STT-3.7-Realtime-Agent: transcripts + end of turn
         │
         ├── openai.LLM      → https://llm-gateway.assemblyai.com/v1
         │                     LLM Gateway: the reply, plus tool calls
@@ -127,14 +127,14 @@ Everything is in [`agent.py`](agent.py). Five pieces do the real work.
 
 ```python
 stt=assemblyai.STT(
-    model="universal-3-6-pro",
+    model="assemblyai-stt-3-7-realtime-agent",
     mode="balanced",
     vad_threshold=VAD_THRESHOLD,
     keyterms_prompt=["Acme", "LiveKit", "AssemblyAI"],
 ),
 ```
 
-`assemblyai.STT` streams the room's audio to Universal-3.6 Pro Realtime and gets back transcripts plus an end-of-turn decision. `mode="balanced"` applies the turn-silence settings that match streaming directly to the API. `vad_threshold` keeps AssemblyAI's voice activity detection in step with Silero's. `keyterms_prompt` boosts the names your agent has to hear right.
+`assemblyai.STT` streams the room's audio to AssemblyAI-STT-3.7-Realtime-Agent and gets back transcripts plus an end-of-turn decision. `mode="balanced"` applies the turn-silence settings that match streaming directly to the API. `vad_threshold` keeps AssemblyAI's voice activity detection in step with Silero's. `keyterms_prompt` boosts the names your agent has to hear right.
 
 ### 2. The LLM, through the LLM Gateway
 
@@ -171,7 +171,7 @@ tts_text_transforms=["filter_emoji", "filter_markdown"],
 use_tts_aligned_transcript=True,
 ```
 
-`turn_detection="stt"` hands the end-of-turn decision to Universal-3.6 Pro Realtime, and `min_delay: 0` stops LiveKit from adding its own wait on top. When the user talks over the agent, LiveKit stops playback and the TTS plugin cancels the request in flight while keeping the session for the next reply. `use_tts_aligned_transcript=True` uses per-word timings from the TTS so the chat history keeps an interrupted reply only up to the word the user heard.
+`turn_detection="stt"` hands the end-of-turn decision to AssemblyAI-STT-3.7-Realtime-Agent, and `min_delay: 0` stops LiveKit from adding its own wait on top. When the user talks over the agent, LiveKit stops playback and the TTS plugin cancels the request in flight while keeping the session for the next reply. `use_tts_aligned_transcript=True` uses per-word timings from the TTS so the chat history keeps an interrupted reply only up to the word the user heard.
 
 ### 5. Tool calling
 
@@ -213,7 +213,7 @@ Both live in the `Assistant` class: `instructions` is the system prompt, and the
 
 ```python
 stt=assemblyai.STT(
-    model="universal-3-6-pro",
+    model="assemblyai-stt-3-7-realtime-agent",
     mode="max_accuracy",  # "min_latency" · "balanced" · "max_accuracy"
     vad_threshold=VAD_THRESHOLD,
 ),
@@ -225,7 +225,7 @@ stt=assemblyai.STT(
 
 ```python
 stt=assemblyai.STT(
-    model="universal-3-6-pro",
+    model="assemblyai-stt-3-7-realtime-agent",
     mode="balanced",
     vad_threshold=VAD_THRESHOLD,
     prompt="Customer support call about a delayed delivery.",
